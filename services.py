@@ -1,8 +1,12 @@
+import collections
 import csv
 import os
+from typing import List
 
 import bs4
 import requests
+
+Picks = collections.namedtuple('Picks', 'picker, picks')
 
 
 #################
@@ -45,12 +49,28 @@ def scrape(site):
 #############
 ###  CSV  ###
 #############
+
+def import_picks_from_csv(race: str) -> List[Picks]:
+    # read weekly pick csv into list of named tuples
+    with open(f"data/{race}_picks.csv", "r") as f:
+        reader = csv.DictReader(f)
+        picks = []
+        for row in reader:
+            wk_picks = [int(s) for s in row[
+                "Select three drivers from the list below."].split() if
+                        s.isdigit()]
+            picks.append(Picks(row["Who is submitting picks?"], wk_picks))
+    return picks
+
+
+# write the results from a race to a csv file
 def write_results_to_csv(data, race):
     # check to see if results file exists already
     if os.path.isfile(f"data/{race}_results.csv"):
         overwrite = None
         while not overwrite:
-            overwrite = input(f"The file {race}_results.csv already exists, do you want to overwrite? [Y/N]: ")
+            overwrite = input(
+                f"The file {race}_results.csv already exists, do you want to overwrite? [Y/N]: ")
             if overwrite.lower() == 'y':
                 with open(f"data/{race}_results.csv", "w", newline="") as f:
                     writer = csv.writer(f)
@@ -58,13 +78,15 @@ def write_results_to_csv(data, race):
                     print(
                         f"Results successfully written to data/{race}_results.csv")
             elif overwrite.lower() == 'n':
-                print(f"Please rename the results file or choose a different race and run again.")
+                print(
+                    f"Please rename the results file or choose a different race and run again.")
                 raise SystemExit(0)
             elif overwrite.lower() == 'q':
                 print(f"Good bye.")
                 raise SystemExit(0)
             else:
-                print(f"[{overwrite}] is not a valid response.  Please enter Y or N or [Q]uit to continue: ")
+                print(
+                    f"[{overwrite}] is not a valid response.  Please enter Y or N or [Q]uit to continue: ")
                 overwrite = None
     else:
         with open(f"data/{race}_results.csv", "w", newline="") as f:
