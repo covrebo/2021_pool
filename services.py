@@ -7,12 +7,43 @@ import bs4
 import requests
 
 Picks = collections.namedtuple('Picks', 'picker, picks')
+WeeklyPoints = collections.namedtuple('WeeklyPoints', 'picker, d1, d1_pts, d2, d2_pts, d3, d3_pts, bonus, total_points,')
 
 
 #################
 ###  SCORING  ###
 #################
 
+# calculate the weekly points for each driver
+def weekly_points(race: int, picks: List[Picks], results: List) -> List[WeeklyPoints]:
+    results_dict = {}
+    for r in results[1:]:
+        results_dict[f'{r[2]}'] = {
+            f'{results[0][0]}': r[0],
+            f'{results[0][1]}': r[1],
+            f'{results[0][2]}': r[2],
+            f'{results[0][7]}': r[7],
+        }
+
+    # TODO: might want to refactor this to a dictionary versus named tuple
+    wkly_points = []
+
+    for pick in picks:
+        bonus = input(f"Weekly bonus points for {pick.picker}: ")
+        wkly_points.append(WeeklyPoints(picker=pick.picker, d1=pick.picks[0], d1_pts=results_dict[f'{pick.picks[0]}']['PTS'], d2=pick.picks[1], d2_pts=results_dict[f'{pick.picks[1]}']['PTS'], d3=pick.picks[2], d3_pts=results_dict[f'{pick.picks[2]}']['PTS'], bonus=bonus, total_points=(int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
+    # 0, (int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']), 0)
+
+    wkly_points = sorted(wkly_points, key=lambda x: x.total_points, reverse=True)
+
+
+    # print(race)
+    # print(picks)
+    # print(results)
+    # print(results_dict)
+    # print(wkly_points)
+    # for pick in wkly_points:
+    #     print(f"{pick.picker} finished with {pick.total_points} points.")
+    return wkly_points
 
 #####################
 ###  WEBSCRAPING  ###
@@ -52,15 +83,18 @@ def scrape(site):
 
 def import_picks_from_csv(race: str) -> List[Picks]:
     # read weekly pick csv into list of named tuples
-    with open(f"data/{race}_picks.csv", "r") as f:
-        reader = csv.DictReader(f)
-        picks = []
-        for row in reader:
-            wk_picks = [int(s) for s in row[
-                "Select three drivers from the list below."].split() if
-                        s.isdigit()]
-            picks.append(Picks(row["Who is submitting picks?"], wk_picks))
-    return picks
+    try:
+        with open(f"data/{race}_picks.csv", "r") as f:
+            reader = csv.DictReader(f)
+            picks = []
+            for row in reader:
+                wk_picks = [int(s) for s in row[
+                    "Select three drivers from the list below."].split() if
+                            s.isdigit()]
+                picks.append(Picks(row["Who is submitting picks?"], wk_picks))
+        return picks
+    except FileNotFoundError:
+        print(f"The file {race}_picks.csv does not exist.  Check the data directory.")
 
 
 # write the results from a race to a csv file

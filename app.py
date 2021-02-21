@@ -24,15 +24,26 @@ def main():
     # import picks for the week
     picks = services.import_picks_from_csv(race)
 
+    # print the picks for the week
+    for p in picks:
+        print(f"{p.picker} has the {p.picks[0]}, {p.picks[1]}, and {p.picks[2]}")
+
     # retrieve the race results
-    # raw_site = services.pull_site(url)
+    raw_site = services.pull_site(url)
 
     # validate the data was pulled from the site
-    # if not raw_site:
-    #     raise SystemExit(0)
+    if not raw_site:
+        raise SystemExit(0)
 
     # process the site data to a list
-    # results = services.scrape(raw_site)
+    results = services.scrape(raw_site)
+
+    # calculate weekly points
+    weekly_points = services.weekly_points(race, picks, results)
+
+    print("###  RESULTS  ###")
+    for rank, picker in enumerate(weekly_points):
+        print(f"#{rank + 1}: {picker.picker} with {picker.total_points}")
 
     # write the results to a csv file
     # services.write_results_to_csv(results, race)
