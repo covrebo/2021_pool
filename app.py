@@ -5,8 +5,8 @@ import services
 # √ prompt the user for the race number
 # √ prompt the user for the results URL from ESPN
 # √ scrape ESPN results table and write results to CSV
-# TODO: import the picks for the week
-# TODO: import the weekly picks and convert to named tuple
+# √ import the picks for the week
+# √ import the weekly picks and convert to named tuple
 # TODO: import the standings and convert to named tuples
 # TODO: calculate the weekly points and new standings
 # TODO: write the new standing to csv
@@ -46,7 +46,10 @@ def main():
         print(f"#{rank + 1}: {picker.picker} with {picker.total_points}")
 
     # write the results to a csv file
-    # services.write_results_to_csv(results, race)
+    services.write_results_to_csv(results, race)
+
+    # TODO: import previous standings
+    # TODO: updated standings
 
 if __name__ == '__main__':
     main()

@@ -7,7 +7,8 @@ import bs4
 import requests
 
 Picks = collections.namedtuple('Picks', 'picker, picks')
-WeeklyPoints = collections.namedtuple('WeeklyPoints', 'picker, d1, d1_pts, d2, d2_pts, d3, d3_pts, bonus, total_points,')
+WeeklyPoints = collections.namedtuple('WeeklyPoints',
+                                      'picker, d1, d1_pts, d2, d2_pts, d3, d3_pts, bonus, total_points,')
 
 
 #################
@@ -15,7 +16,8 @@ WeeklyPoints = collections.namedtuple('WeeklyPoints', 'picker, d1, d1_pts, d2, d
 #################
 
 # calculate the weekly points for each driver
-def weekly_points(race: int, picks: List[Picks], results: List) -> List[WeeklyPoints]:
+def weekly_points(race: int, picks: List[Picks], results: List) -> List[
+    WeeklyPoints]:
     results_dict = {}
     for r in results[1:]:
         results_dict[f'{r[2]}'] = {
@@ -30,11 +32,21 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[WeeklyPo
 
     for pick in picks:
         bonus = input(f"Weekly bonus points for {pick.picker}: ")
-        wkly_points.append(WeeklyPoints(picker=pick.picker, d1=pick.picks[0], d1_pts=results_dict[f'{pick.picks[0]}']['PTS'], d2=pick.picks[1], d2_pts=results_dict[f'{pick.picks[1]}']['PTS'], d3=pick.picks[2], d3_pts=results_dict[f'{pick.picks[2]}']['PTS'], bonus=bonus, total_points=(int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
+        wkly_points.append(WeeklyPoints(picker=pick.picker, d1=pick.picks[0],
+                                        d1_pts=
+                                        results_dict[f'{pick.picks[0]}'][
+                                            'PTS'], d2=pick.picks[1], d2_pts=
+                                        results_dict[f'{pick.picks[1]}'][
+                                            'PTS'], d3=pick.picks[2], d3_pts=
+                                        results_dict[f'{pick.picks[2]}'][
+                                            'PTS'], bonus=bonus, total_points=(
+                        int(results_dict[f'{pick.picks[0]}']['PTS']) + int(
+                    results_dict[f'{pick.picks[1]}']['PTS']) + int(
+                    results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
     # 0, (int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']), 0)
 
-    wkly_points = sorted(wkly_points, key=lambda x: x.total_points, reverse=True)
-
+    wkly_points = sorted(wkly_points, key=lambda x: x.total_points,
+                         reverse=True)
 
     # print(race)
     # print(picks)
@@ -45,11 +57,14 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[WeeklyPo
     #     print(f"{pick.picker} finished with {pick.total_points} points.")
     return wkly_points
 
+
 #####################
 ###  WEBSCRAPING  ###
 #####################
 
 def pull_site(url):
+    # TODO: check is there is a results file so you don't make request every time
+
     raw_site = requests.get(url)
     try:
         raw_site.raise_for_status()
@@ -92,9 +107,28 @@ def import_picks_from_csv(race: str) -> List[Picks]:
                     "Select three drivers from the list below."].split() if
                             s.isdigit()]
                 picks.append(Picks(row["Who is submitting picks?"], wk_picks))
+        # check for previous week's picks
+        try:
+            with open(f'data/{int(race) - 1}_picks.csv', "r") as f:
+                reader = csv.DictReader(f)
+                # build list of picks submitted
+                pickers = []
+                for pick in picks:
+                    pickers.append(pick.picker)
+                for row in reader:
+                    if row["Who is submitting picks?"] not in pickers:
+                        wk_picks = [int(s) for s in row[
+                            "Select three drivers from the list below."].split()
+                                    if s.isdigit()]
+                        picks.append(
+                            Picks(row["Who is submitting picks?"], wk_picks))
+                return picks
+        except FileNotFoundError:
+            return picks
         return picks
     except FileNotFoundError:
-        print(f"The file {race}_picks.csv does not exist.  Check the data directory.")
+        print(
+            f"The file {race}_picks.csv does not exist.  Check the data directory.")
 
 
 # write the results from a race to a csv file
