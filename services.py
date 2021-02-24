@@ -1,7 +1,7 @@
 import collections
 import csv
 import os
-from typing import List
+from typing import List, Dict
 
 import bs4
 import requests
@@ -9,6 +9,8 @@ import requests
 Picks = collections.namedtuple('Picks', 'picker, picks')
 WeeklyPoints = collections.namedtuple('WeeklyPoints',
                                       'picker, d1, d1_pts, d2, d2_pts, d3, d3_pts, bonus, total_points,')
+WeeklyStandings = collections.namedtuple('WeeklyStandings',
+                                         'picker, race_points, total_points,')
 
 
 #################
@@ -40,9 +42,9 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[
                                             'PTS'], d3=pick.picks[2], d3_pts=
                                         results_dict[f'{pick.picks[2]}'][
                                             'PTS'], bonus=bonus, total_points=(
-                        int(results_dict[f'{pick.picks[0]}']['PTS']) + int(
-                    results_dict[f'{pick.picks[1]}']['PTS']) + int(
-                    results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
+                    int(results_dict[f'{pick.picks[0]}']['PTS']) + int(
+                results_dict[f'{pick.picks[1]}']['PTS']) + int(
+                results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
     # 0, (int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']), 0)
 
     wkly_points = sorted(wkly_points, key=lambda x: x.total_points,
@@ -56,6 +58,34 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[
     # for pick in wkly_points:
     #     print(f"{pick.picker} finished with {pick.total_points} points.")
     return wkly_points
+
+
+def calculate_standings(race: str, prev_standings: List[List],
+                        weekly_points: List[WeeklyPoints]) -> Dict:
+    prev_standings_dict = {}
+    wkly_standings = {}
+    if prev_standings:
+        for row in prev_standings[1:]:
+            prev_standings_dict[f"{row[0]}"]: row[-1]
+        for row in prev_standings[1:]:
+            tp = [pick.total_points for pick in weekly_points if
+                     pick.picker == row[0]]
+            wp = [pick.total_points for pick in weekly_points if
+                                   pick.picker == row[0]]
+            wkly_standings[f"{row[0]}"]= [
+                ('picker', f"{row[0]}"),
+                ('weekly_points', int(wp[0])),
+                ('total_points', int(row[-1]) + int(tp[0]))
+            ]
+        return wkly_standings
+    else:
+        for pick in weekly_points:
+            wkly_standings[pick.picker]= [
+                ('picker', pick.picker),
+                ('weekly_points', pick.total_points),
+                ('total_points', pick.total_points)
+            ]
+        return wkly_standings
 
 
 #####################
@@ -161,6 +191,54 @@ def write_results_to_csv(data, race):
             writer = csv.writer(f)
             writer.writerows(data)
         print(f"Results successfully written to data/{race}_results.csv")
+
+
+def import_previous_standings(race: str) -> List[List]:
+    standings = []
+    try:
+        with open(f"data/{int(race) - 1}_standings.csv", "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                standings.append(row)
+        return standings
+    except:
+        return None
+
+
+def write_standings_to_csv(race: str, prev_standings: List[List], standings: Dict):
+    if prev_standings:
+        headers = prev_standings[0]
+        print(f"headers before: {prev_standings[0]}")
+        headers.append(f'R{race} Points')
+        headers.append(f'R{race} Total Points')
+        print(f"headers after: {headers}")
+        try:
+            with open(f"data/{race}_standings.csv", "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+                for row in prev_standings[1:]:
+                    print(f"row before: {row}")
+                    row.append(standings[f"{row[0]}"][1][1])
+                    row.append(standings[f"{row[0]}"][2][1])
+                    print(f"row after: {row}")
+                    writer.writerow(row)
+        except:
+            print(f"There was an error trying to save the weekly standings.")
+    else:
+        try:
+            with open(f"data/{race}_standings.csv", "w") as f:
+                writer = csv.writer(f)
+                headers = ["picker", "R1 Points", "R1 Total Points"]
+                writer.writerow(headers)
+                for key, value in standings.items():
+                    print(f"row before: {key}, {value}")
+                    row = [f"{key}", f"{value[1][1]}", f"{value[2][1]}"]
+                    print(f"{row}")
+                    writer.writerow(row)
+        except:
+            print(f"There was an error trying to save the weekly standings.")
+
+    return None
 
 
 ###################

@@ -48,8 +48,16 @@ def main():
     # write the results to a csv file
     services.write_results_to_csv(results, race)
 
-    # TODO: import previous standings
-    # TODO: updated standings
+    # import previous standings
+    prev_standings = services.import_previous_standings(race)
+    print(prev_standings)
+
+    # update standings
+    standings = services.calculate_standings(race, prev_standings, weekly_points)
+    print(standings)
+
+    # TODO: write the standings to a csv
+    services.write_standings_to_csv(race, prev_standings, standings)
 
 if __name__ == '__main__':
     main()
