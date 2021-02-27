@@ -45,42 +45,35 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[
                     int(results_dict[f'{pick.picks[0]}']['PTS']) + int(
                 results_dict[f'{pick.picks[1]}']['PTS']) + int(
                 results_dict[f'{pick.picks[2]}']['PTS']) + int(bonus))))
-    # 0, (int(results_dict[f'{pick.picks[0]}']['PTS']) + int(results_dict[f'{pick.picks[1]}']['PTS']) + int(results_dict[f'{pick.picks[2]}']['PTS']), 0)
+    print()
 
     wkly_points = sorted(wkly_points, key=lambda x: x.total_points,
                          reverse=True)
 
-    # print(race)
-    # print(picks)
-    # print(results)
-    # print(results_dict)
-    # print(wkly_points)
-    # for pick in wkly_points:
-    #     print(f"{pick.picker} finished with {pick.total_points} points.")
     return wkly_points
 
 
-def calculate_standings(race: str, prev_standings: List[List],
-                        weekly_points: List[WeeklyPoints]) -> Dict:
+def calculate_standings(prev_standings: List[List],
+                        wkly_points: List[WeeklyPoints]) -> Dict:
     prev_standings_dict = {}
     wkly_standings = {}
     if prev_standings:
         for row in prev_standings[1:]:
             prev_standings_dict[f"{row[0]}"]: row[-1]
         for row in prev_standings[1:]:
-            tp = [pick.total_points for pick in weekly_points if
-                     pick.picker == row[0]]
-            wp = [pick.total_points for pick in weekly_points if
-                                   pick.picker == row[0]]
-            wkly_standings[f"{row[0]}"]= [
+            tp = [pick.total_points for pick in wkly_points if
+                  pick.picker == row[0]]
+            wp = [pick.total_points for pick in wkly_points if
+                  pick.picker == row[0]]
+            wkly_standings[f"{row[0]}"] = [
                 ('picker', f"{row[0]}"),
                 ('weekly_points', int(wp[0])),
                 ('total_points', int(row[-1]) + int(tp[0]))
             ]
         return wkly_standings
     else:
-        for pick in weekly_points:
-            wkly_standings[pick.picker]= [
+        for pick in wkly_points:
+            wkly_standings[pick.picker] = [
                 ('picker', pick.picker),
                 ('weekly_points', pick.total_points),
                 ('total_points', pick.total_points)
@@ -205,22 +198,26 @@ def import_previous_standings(race: str) -> List[List]:
         return None
 
 
-def write_standings_to_csv(race: str, prev_standings: List[List], standings: Dict):
+def write_standings_to_csv(race: str, prev_standings: List[List],
+                           standings: Dict) -> List:
+    new_standings = []
     if prev_standings:
         headers = prev_standings[0]
-        print(f"headers before: {prev_standings[0]}")
+        # DEBUG print(f"headers before: {prev_standings[0]}")
         headers.append(f'R{race} Points')
         headers.append(f'R{race} Total Points')
-        print(f"headers after: {headers}")
+        new_standings.append(headers)
+        # DEBUG print(f"headers after: {headers}")
         try:
             with open(f"data/{race}_standings.csv", "w") as f:
                 writer = csv.writer(f)
                 writer.writerow(headers)
                 for row in prev_standings[1:]:
-                    print(f"row before: {row}")
+                    # DEBUG print(f"row before: {row}")
                     row.append(standings[f"{row[0]}"][1][1])
                     row.append(standings[f"{row[0]}"][2][1])
-                    print(f"row after: {row}")
+                    new_standings.append(row)
+                    # DEBUG print(f"row after: {row}")
                     writer.writerow(row)
         except:
             print(f"There was an error trying to save the weekly standings.")
@@ -229,16 +226,18 @@ def write_standings_to_csv(race: str, prev_standings: List[List], standings: Dic
             with open(f"data/{race}_standings.csv", "w") as f:
                 writer = csv.writer(f)
                 headers = ["picker", "R1 Points", "R1 Total Points"]
+                new_standings.append(headers)
                 writer.writerow(headers)
                 for key, value in standings.items():
-                    print(f"row before: {key}, {value}")
+                    # DEBUG print(f"row before: {key}, {value}")
                     row = [f"{key}", f"{value[1][1]}", f"{value[2][1]}"]
-                    print(f"{row}")
+                    new_standings.append(row)
+                    # DEBUG print(f"{row}")
                     writer.writerow(row)
         except:
             print(f"There was an error trying to save the weekly standings.")
 
-    return None
+    return new_standings
 
 
 ###################
@@ -278,3 +277,18 @@ def get_user_input():
     url = input("What is the results url from ESPN: ")
 
     return race, url
+
+
+def display_standings(new_standings: List):
+    # remove the row with the headers
+    new_standings.pop(0)
+    # sort the standings
+    sorted_standings = sorted(new_standings, key=lambda x: x[-1], reverse=True)
+    print()
+    print("###################")
+    print("###  STANDINGS  ###")
+    print("###################")
+    print()
+    for rank, list in enumerate(sorted_standings):
+        print(f"#{rank + 1}: {list[0]} with {list[-1]} points.")
+    return None
