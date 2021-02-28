@@ -55,6 +55,7 @@ def weekly_points(race: int, picks: List[Picks], results: List) -> List[
 
 def calculate_standings(prev_standings: List[List],
                         wkly_points: List[WeeklyPoints]) -> Dict:
+    # TODO: handle ties
     prev_standings_dict = {}
     wkly_standings = {}
     if prev_standings:
@@ -80,6 +81,51 @@ def calculate_standings(prev_standings: List[List],
             ]
         return wkly_standings
 
+# update the win summary
+def update_win_summary(race: int, picks: List[Picks], new_standings: List, weekly_points: List[WeeklyPoints]) -> List:
+    # TODO: handle ties
+    win_summary = []
+    # TODO: move to csv section and make more generic
+    # check for an existing win summary csv
+    if os.path.isfile(f"data/{int(race)-1}_wins.csv"):
+        # read previous wins into memory
+        with open(f'data/{int(race) - 1}_wins.csv', "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                win_summary.append(row)
+        # update win summary list
+        for winner in win_summary[1:]:
+            if winner[0] == weekly_points[0][0]:
+                win_count = int(winner[1])
+                win_count += 1
+                winner[1] = win_count
+        # write new win summary to csv
+        with open(f"data/{race}_wins.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerows(win_summary)
+
+    else:
+        with open(f"data/{race}_wins.csv", "w") as f:
+            # create header row for win summary list
+            header = ["picker", "wins"]
+            win_summary.append(header)
+            # create empty list of winners
+            for p in picks:
+                row = [p.picker, 0]
+                win_summary.append(row)
+            # update the list with the first pool winner
+            for picker in win_summary[1:]:
+                if picker[0] == new_standings[0][0]:
+                    picker[1] += 1
+            # write results to csv
+            writer = csv.writer(f)
+            writer.writerows(win_summary)
+
+    # remove the header
+    win_summary.pop(0)
+    win_summary = sorted(win_summary, key=lambda x: int(x[1]), reverse=True)
+
+    return win_summary
 
 #####################
 ###  WEBSCRAPING  ###
@@ -263,6 +309,7 @@ def display_header():
     print()
     print("#" * 30)
     print("###  2021 POOL CALCULATOR  ###")
+    print("###         v2021.0        ###")
     print("#" * 30)
     print()
 

@@ -13,6 +13,7 @@ def main():
     # import picks for the week
     picks = services.import_picks_from_csv(race)
 
+    # TODO: move to services
     # print the picks for the week
     print()
     print("######################")
@@ -36,6 +37,7 @@ def main():
     # calculate weekly points
     weekly_points = services.weekly_points(race, picks, results)
 
+    # TODO: move to services
     print()
     print("########################")
     print("###  WEEKLY RESULTS  ###")
@@ -61,6 +63,20 @@ def main():
 
     # print the standings to the console
     services.display_standings(new_standings)
+
+    # weekly wins
+    win_summary = services.update_win_summary(race, picks, new_standings, weekly_points)
+
+    # TODO: move to services
+    # print wins summary
+    print()
+    print("######################")
+    print("###  WINS SUMMARY  ###")
+    print("######################")
+    print()
+    for rank, picker in enumerate(win_summary):
+        print(f"#{rank + 1}: {picker[0]} with {picker[1]} wins.")
+    print()
 
     # TODO: Track weekly pool winners
     # TODO: Convert to db
