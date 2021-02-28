@@ -317,13 +317,17 @@ def display_header():
 
 
 def get_user_input():
+    # TODO: implement input validation
     # get the race number from the user
     race = input("What is the race number [XX]: ")
 
     # get the results URL from the user
     url = input("What is the results url from ESPN: ")
 
-    return race, url
+    # prompt the user for picks only or full results
+    picks_only = input("Do you want to get [P]icks or [R]esults: ")
+
+    return race, url, picks_only
 
 
 def display_standings(new_standings: List):

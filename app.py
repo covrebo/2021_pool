@@ -1,3 +1,4 @@
+import sys
 import services
 
 def main():
@@ -8,7 +9,25 @@ def main():
     services.display_header()
 
     # get the race number and results url from the user
-    race, url = services.get_user_input()
+    race, url, picks_only = services.get_user_input()
+
+    if picks_only.lower() == "p":
+        # import picks for the week
+        picks = services.import_picks_from_csv(race)
+
+        # TODO: move to services
+        # print the picks for the week
+        print()
+        print("######################")
+        print("###  WEEKLY PICKS  ###")
+        print("######################")
+        print()
+        for p in picks:
+            print(
+                f"{p.picker} has the {p.picks[0]}, {p.picks[1]}, and {p.picks[2]}")
+        print()
+
+        sys.exit()
 
     # import picks for the week
     picks = services.import_picks_from_csv(race)
