@@ -166,38 +166,83 @@ def scrape(site):
 #############
 
 def import_picks_from_csv(race: str) -> List[Picks]:
-    # read weekly pick csv into list of named tuples
-    try:
-        with open(f"data/{race}_picks.csv", "r") as f:
-            reader = csv.DictReader(f)
-            picks = []
-            for row in reader:
-                wk_picks = [int(s) for s in row[
-                    "Select three drivers from the list below."].split() if
-                            s.isdigit()]
-                picks.append(Picks(row["Who is submitting picks?"], wk_picks))
-        # check for previous week's picks
+    picks_dict = {}
+    # check for previous picks
+    if os.path.isfile(f"data/{int(race) - 1}_picks_final.csv"):
         try:
-            with open(f'data/{int(race) - 1}_picks.csv', "r") as f:
-                reader = csv.DictReader(f)
-                # build list of picks submitted
-                pickers = []
-                for pick in picks:
-                    pickers.append(pick.picker)
+            # read previous picks into dictionary
+            with open(f"data/{int(race) - 1}_picks_final.csv", "r") as f:
+                reader = csv.reader(f)
                 for row in reader:
-                    if row["Who is submitting picks?"] not in pickers:
-                        wk_picks = [int(s) for s in row[
-                            "Select three drivers from the list below."].split()
-                                    if s.isdigit()]
-                        picks.append(
-                            Picks(row["Who is submitting picks?"], wk_picks))
-                return picks
-        except FileNotFoundError:
-            return picks
+                    picks_dict[f"{row[0]}"] = [row[1], row[2], row[3]]
+        except:
+            print("ERROR SERVICES:179")
+        # read the new picks into a list
+        try:
+            with open(f"data/{race}_picks.csv", "r") as f:
+                reader = csv.DictReader(f)
+                picks_list = []
+                for row in reader:
+                    wk_picks = [int(s) for s in row[
+                        "Select three drivers from the list below."].split() if
+                                s.isdigit()]
+                    picks_list.append(Picks(row["Who is submitting picks?"], wk_picks))
+        except:
+            print("ERROR SERVICES:191")
+        # create the new list of picks
+        for pick in picks_list:
+            if pick.picker in picks_dict.keys():
+                picks_dict[f"{pick.picker}"]= [pick.picks[0], pick.picks[1], pick.picks[2]]
+        # write the new list of picks to a file:
+        try:
+            with open(f"data/{race}_picks_final.csv", "w") as f:
+                writer = csv.writer(f)
+                for key, value in picks_dict.items():
+                    row = [key, value[0], value[1], value[2]]
+                    writer.writerow(row)
+        except:
+            print("ERROR SERVICES:203")
+        # TODO: refactor to return a dict
+        # convert to correct return value
+        picks = []
+        for key, value in picks_dict.items():
+            picks.append(Picks(key, value))
         return picks
-    except FileNotFoundError:
-        print(
-            f"The file {race}_picks.csv does not exist.  Check the data directory.")
+
+    # if there are no previous picks
+    else:
+        # read picks into a list
+        try:
+            with open(f"data/{race}_picks.csv", "r") as f:
+                reader = csv.DictReader(f)
+                picks_list = []
+                for row in reader:
+                    wk_picks = [int(s) for s in row[
+                        "Select three drivers from the list below."].split() if
+                                s.isdigit()]
+                    picks_list.append(
+                        Picks(row["Who is submitting picks?"], wk_picks))
+        except:
+            print("ERROR SERVICES:225")
+        # create the new list of picks
+        for pick in picks_list:
+            picks_dict[f"{pick.picker}"]= [pick.picks[0], pick.picks[1],
+                                               pick.picks[2]]
+        # write the new list of picks to a file:
+        try:
+            with open(f"data/{race}_picks_final.csv", "w") as f:
+                writer = csv.writer(f)
+                for key, value in picks_dict.items():
+                    row = [key, value[0], value[1], value[2]]
+                    writer.writerow(row)
+        except:
+            print("ERROR SERVICES:238")
+        # TODO: refactor to return a dict
+        # convert to correct return value
+        picks = []
+        for key, value in picks_dict.items():
+            picks.append(Picks(key, value))
+        return picks
 
 
 # write the results from a race to a csv file

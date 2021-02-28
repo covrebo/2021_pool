@@ -97,7 +97,6 @@ def main():
         print(f"#{rank + 1}: {picker[0]} with {picker[1]} wins.")
     print()
 
-    # TODO: Track weekly pool winners
     # TODO: Convert to db
     # TODO: Migrate console prints to services
     # TODO: Write tests
@@ -123,13 +122,13 @@ if __name__ == '__main__':
 # √ write the new standings to csv
 #
 # 2021.1
-# Weekly win tracking
-# Split picks selections from results
+# √ Weekly win tracking
+# √ Split picks selections from results
 # Refactor for better data structures
 # Email support for weekly email
 #
 # 2021.2
-# Refactor from csv to database supper
+# Refactor from csv to database support
 #
 # 2021.3
 # Web app implementation
